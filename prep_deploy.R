@@ -13,9 +13,8 @@ dir.create(here("data", "pins"), recursive = TRUE, showWarnings = FALSE)
 app_board <- board_folder(here("data", "pins"), versioned = FALSE)
 
 # 2. Process and Pin Homeless Data
-# Assuming 'solano_upc_enrollment' or equivalent contains the homeless data
-# Replace with actual pin name from your CDE pipeline if different
-homeless_raw <- read_csv(here("data", "homeless.csv")) |> clean_names()
+# Note: Reading a 'parquet' pin requires the {arrow} package to be installed.
+homeless_raw <- pin_read(cde_board, "homeless_enrollment_clean")
 
 homeless_total <- homeless_raw |>
   filter(
@@ -27,12 +26,13 @@ homeless_total <- homeless_raw |>
   ) |>
   mutate(
     across(
-      c(temporarily_doubled_up, temporary_shelters,
-        hotels_motels, temporarily_unsheltered,
-        missing_unknown),
-      ~ifelse(is.character(.), parse_number(.), .)
+      any_of(c("temporarily_doubled_up", "temporary_shelters",
+               "hotels_motels", "temporarily_unsheltered",
+               "missing_unknown")),
+      ~ if (is.character(.x)) parse_number(.x) else as.numeric(.x)
     )
   )
+
 pin_write(app_board, homeless_total, "homeless_total", type = "rds")
 
 # 3. Process and Pin District Geo
@@ -48,26 +48,36 @@ district_geo <- read_sf(here("data", "California_School_District_Areas_2022-23.g
 pin_write(app_board, district_geo, "district_geo", type = "rds")
 
 # 4. Process and Pin School Geo
-school_geo <- read_sf(here("data", "DistrictAreas2526.gpkg")) |>
-  clean_names() |>
+ca_schools <- pin_read(cde_board, "ca_schools_directory")
+
+# Prepare homeless metrics for the join
+school_homeless_metrics <- homeless_total |>
+  filter(aggregate_level == "S") |>
+  select(
+    cds = school_code, # Use school_code to match the 7-digit code or cds if it's 14 digits. Check your data.
+    enroll_total = cumulative_enrollment,
+    ho_mcount = homeless_student_enrollment
+  ) |>
+  mutate(ho_mpct = round((ho_mcount / enroll_total) * 100, 1))
+
+school_geo <- ca_schools |>
   filter(county_name == "Solano") |>
   mutate(
+    latitude = suppressWarnings(as.numeric(latitude)),
+    longitude = suppressWarnings(as.numeric(longitude)),
     school_color = case_match(
-      school_type,
-      "K-12" ~ "#00BFFF",
-      "Juvenile Court" ~ "#483D8B",
-      "Special Education" ~ "#DB7093",
-      "County Community" ~ "#BA55D3",
-      "Community Day" ~ "#DA70D6",
-      "Continuation" ~ "#6A5ACD",
-      "High" ~ "#7B68EE",
-      "Middle" ~ "#1E90FF",
-      "Elementary" ~ "#87CEFA",
-      "Alternative Schools of Choice" ~ "#EE82EE",
-      .default = "#808080"
+      eil_name,
+      "Elementary" ~ "lightblue",
+      "Intermediate/Middle/Junior High" ~ "cadetblue",
+      "High School" ~ "darkblue",
+      "Elementary-High Combination" ~ "purple",
+      .default = "gray"
     )
   ) |>
-  rename(cds = cds_code)
+  drop_na(latitude, longitude) |>
+  left_join(school_homeless_metrics, by = "cds") |>
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
+
 pin_write(app_board, school_geo, "school_geo", type = "rds")
 
 # 5. Process and Pin Resources

@@ -1,0 +1,13 @@
+name: foster_homeless
+title: foster_homeless
+username: solanocoe
+account: solanocoe
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 11080066
+bundleId: 10295282
+url: https://solanocoe.shinyapps.io/foster_homeless/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: 0_clean_enrollment.R|1_clean_assistance.R|2_clean_dashboard.R|3_clean_homeless_enrollment.R|4_clean_foster.R|5_what_if.R|app_pre_compute.R|app_v1.R|app_v2.R|app_v3.R|app_v4.R|Benicia Unified foster homeless one pager.pdf|Data Resources for Homeless and Foster Youth.pptx|Dixon Unified foster homeless one pager.pdf|DUSD_homeless_report.qmd|DUSD_homeless_report.tex|Elite Public foster homeless one pager.pdf|Ernest Kimme Charter Academy foster homeless one pager.pdf|extra.R|Fairfield-Suisun Unified foster homeless one pager.pdf|fonts/weepeople.css|fonts/weepeople.ttf|foster_homeless_data_resources.qmd|foster_homeless_report.pdf|foster_homeless_report.qmd|foster_homeless_report.tex|foster_homeless_report_2023.qmd|generate_report.R|homeless_extra_graphics.qmd|homeless_icons.html|homeless_icons.qmd|homeless_poster.html|homeless_poster.pdf|homeless_poster.qmd|homeless_poster.rmarkdown|homeless_tiles.qmd|map_test.R|Mare Island Technology Academy foster homeless one pager.pdf|MIT Griffin Academy Middle foster homeless one pager.pdf|resource_lat_long.R|resources.pdf|Solano County Office of Education foster homeless one pager.pdf|Solano County Resource Guide.pdf|Travis Unified foster homeless one pager.pdf|Vacaville Unified foster homeless one pager.pdf|Vallejo Charter foster homeless one pager.pdf|Vallejo City Unified foster homeless one pager.pdf|VUSD_homeless_report.pdf|VUSD_homeless_report.qmd|VUSD_homeless_report.tex|homeless_icons_files|homeless_poster_files

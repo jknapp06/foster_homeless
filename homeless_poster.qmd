@@ -1,0 +1,180 @@
+---
+title: "Homelessness Map"
+format: revealjs
+editor: visual
+fig-dpi: 500
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(leaflet)
+library(leaflegend)
+library(sf)
+library(janitor)
+library(openxlsx)
+library(httr)
+library(jsonlite)
+
+homeless <- read_csv("data/homeless.csv") %>% 
+  clean_names()
+district_geo <- read_sf("data/California_School_District_Areas_2022-23.geojson") %>% 
+  clean_names()
+school_geo <- read_sf("data/California_Schools_2022-23.geojson") %>% 
+  clean_names()
+
+# resources_data <- read.xlsx("data/Child Net Resource Guide.xlsx")
+
+district_geo <- 
+  district_geo %>% 
+  filter(county_name == "Solano") %>% 
+  rename(cds = cds_code) %>% 
+  mutate(center_point =  st_centroid(geometry),
+         lng = st_coordinates(center_point)[,1],
+         lat = st_coordinates(center_point)[,2])
+
+school_geo <-
+  school_geo %>%
+  filter(county_name == "Solano") %>%
+  mutate(school_color = case_match(school_type,
+                                  "K-12" ~ "#00BFFF",
+                                  "Juvenile Court" ~ "#483D8B",
+                                  "Special Education" ~ "#DB7093",
+                                  "County Community" ~ "#BA55D3",
+                                  "Community Day" ~ "#DA70D6",
+                                  "Continuation" ~ "#6A5ACD",
+                                  "High" ~ "#7B68EE",
+                                  "Middle" ~ "#1E90FF",
+                                  "Elementary" ~ "#87CEFA",
+                                  "Alternative Schools of Choice" ~ "#EE82EE")) %>%
+  rename(cds = cds_code)
+
+district_list <- 
+  school_geo %>%
+  pull(district_name) %>% 
+  unique()
+
+school_types <- 
+  school_geo %>% 
+  pull(school_type) %>% 
+  unique()
+
+homeless <- 
+  homeless %>% 
+  filter(county_name == "Solano",
+         academic_year == "2022-23") %>% 
+  mutate(across(c(temporarily_doubled_up, temporary_shelters, 
+                         hotels_motels, temporarily_unsheltered, 
+                         missing_unknown),
+                parse_number))
+
+# Regular expression for U.S.-style addresses
+# This pattern roughly matches: Number Street, City, State ZIP
+# address_pattern <- "^[0-9]+\\s+.+\\s+[0-9]+$"
+# 
+# resources_check <- 
+#   resources_data %>% 
+#   mutate(regex_match = grepl(address_pattern, Address))
+
+# Function to get latitude and longitude using Nominatim API
+get_lat_lng <- function(address) {
+    url <- paste0("https://nominatim.openstreetmap.org/search?q=", 
+                  URLencode(address), "&format=json&limit=1")
+    res <- GET(url)
+    # print(url)
+    if (status_code(res) == 200 && length(fromJSON(content(res, "text")))) {
+      data <- fromJSON(content(res, "text"))
+      return(paste(data$lat, data$lon))
+    } else {
+      return(NA)
+    }
+}
+
+# resources <-
+#   resources_check %>%
+#   filter(regex_match == T) %>%
+#   mutate(lat_long = sapply(Address, get_lat_lng)) %>% 
+# 
+# write.xlsx(resources, "data/resources_with_addresses.xlsx")
+
+# resources_plottable <-
+#   resources %>% 
+#   drop_na(lat_long) %>% 
+#   separate_wider_delim(lat_long, " ", names = c("latitude", "longitude")) %>% 
+#   mutate(latitude = parse_number(latitude),
+#          longitude = parse_number(longitude))
+# 
+# write.xlsx(resources_plottable, file = "data/resources_with_addresses.xlsx")
+
+resources_plottable <- read.xlsx("data/resources_with_addresses.xlsx")
+
+```
+
+## Map
+
+```{r homeless}
+#| echo: false
+#| height: 100%
+#| width: 100%
+
+school_homelessness <- 
+  school_geo %>%
+  left_join(homeless, by = join_by(school_name, district_name)) %>% 
+  filter(homeless_student_enrollment > 0)
+
+circles <-
+      makeSymbolsSize(
+      values = school_homelessness$homeless_student_enrollment,
+      strokeWidth = 0,
+      fillColor = "#8888FF",
+      opacity = 1,
+      baseSize = 6,
+      shape = 'circle',
+      color = "#8888FF"
+    )
+
+# resource_cat <- colorFactor(c
+
+leaflet() %>% 
+  addTiles() %>% 
+  addPolygons(data = district_geo,
+              color = "#999999",
+              weight = 2) %>%
+  addMarkers(data = school_homelessness,
+             layerId = ~school_name,
+             popup = paste0("<b>",school_homelessness$school_name,"</b>",
+                                  "<br>",
+                                 school_homelessness$district_name, 
+                                  " School District",
+                                  "<br>School Type: ",
+                                  school_homelessness$school_type,
+                                  "<br>Enrollment: ",
+                                  school_homelessness$enroll_total,
+                                  "<br>Youth experiencing homelessness (cumulative): ",
+                                  school_homelessness$homeless_student_enrollment),
+             icon = circles) %>%
+  addCircleMarkers(data = resources_plottable,
+            popup = paste0("<b>", resources_plottable$Name, "</b><br>",
+                           resources_plottable$Description, "<br>",
+                           resources_plottable$Phone.Number, "<br>",
+                           resources_plottable$Website, "<br>"),
+            stroke = FALSE,
+            radius = 4,
+            fillOpacity = 1,
+            color = "#FF4500") %>% 
+  addLegendSize(
+            values = school_homelessness$homeless_student_enrollment,
+            title = "Students experiencing homelessness",
+            fillColor = "#8888FF",
+            strokeWidth = 0,
+            color = "#8888FF",
+            opacity = 0.6,
+            shape = 'circle',
+            breaks = 5,
+            baseSize = 6,
+            orientation = 'horizontal',
+            position = 'topright')
+```
+
+## 

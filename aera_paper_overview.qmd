@@ -1,0 +1,357 @@
+---
+title: "AERA Paper Overview"
+format: html
+editor: source
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(flextable)
+library(pins)
+library(ftExtra)
+library(here)
+
+if (interactive()) {
+  params <- rmarkdown::yaml_front_matter(
+    rstudioapi::getSourceEditorContext()$path
+  )$params
+}
+
+
+percent_indicators <- c(
+  "absenteeism",
+  "graduation",
+  "suspension",
+  "college/career"
+)
+
+local_board <- board_folder(here("../cde_data_pipeline/data/pins"))
+
+homeless <- pin_read(local_board, "homeless_enrollment_clean") |>
+  filter(
+    county_name == "Solano",
+    charter_school == "All" | aggregate_level == "S",
+    dass == "All" | aggregate_level == "S"
+  ) |>
+  mutate(
+    percent_homeless = homeless_student_enrollment /
+      cumulative_enrollment *
+      100,
+    across(ends_with("(percent)"), parse_number)
+  )
+
+solano_to_orange <- read_csv("data/solano_to_orange.csv") |>
+  mutate(
+    currstatus = if_else(
+      indicator %in% percent_indicators,
+      paste0(currstatus, "%"),
+      as.character(currstatus)
+    )
+  )
+
+homeless_lea <-
+  homeless |>
+  filter(
+    (aggregate_level == "D" & charter_school == "All" & dass == "All") |
+      (aggregate_level == "S" & charter_school == "Yes")
+  )
+
+homeless_count_cumulative <-
+  homeless_lea |>
+  filter(reporting_long == "Total Students") |>
+  pull(homeless_student_enrollment) |>
+  nth(1)
+
+selected_to_orange <-
+  solano_to_orange |>
+  filter(
+    color == 1,
+    (aggregate_level == "S" & charter_school == "Yes") |
+      (aggregate_level == "D")
+  ) |>
+  mutate(
+    reporting_long = fct_relevel(
+      as_factor(reporting_long),
+      "Homeless Youth" # Foster Youth removed here
+    )
+  ) |>
+  arrange(reporting_long)
+
+homeless_count <-
+  selected_to_orange |>
+  # Swapped student_count for homeless_student_enrollment
+  filter(reporting_long == "Homeless Youth", !is.na(homeless_student_enrollment))
+
+```
+
+```{r results_table}
+#| echo: false
+#| tbl-cap: "Number of indicator/student group pairs where the number of students needed to change the group to orange is less than the number of students from that group that are also in the homeless youth group."
+
+districts <-
+  selected_to_orange |>
+  pull(district_name) |>
+  unique()
+
+district_count <- length(districts)
+
+homeless_red <-
+  selected_to_orange |>
+  filter(reporting_long == "Homeless Youth", color == 1)
+
+homeless_greater_than_change <-
+  selected_to_orange |>
+  filter(
+    reporting_long != "Homeless Youth",
+    color == 1,
+    homeless_student_enrollment > 0
+  ) |>
+  mutate(greater = homeless_student_enrollment - students_to_orange) |>
+  arrange(desc(greater)) |>
+  select(
+    academic_year,
+    district_name,
+    indicator,
+    currnumer,
+    currdenom,
+    reporting_long,
+    homeless_student_enrollment,
+    students_to_orange
+  )
+
+student_group_counts <-
+  homeless_greater_than_change |>
+  group_by(academic_year, district_name) |>
+  summarize("Indicator/Groups" = n())
+
+# First, create the wide dataset with clean year columns
+counts_wide <- student_group_counts |>
+  mutate(
+    district_name = case_match(
+      district_name,
+      "Benicia Unified" ~ "District B",
+      "Dixon Unified" ~ "District A",
+      "Fairfield-Suisun Unified" ~ "District D",
+      "Travis Unified" ~ "District C",
+      "Vacaville Unified" ~ "District F", 
+      "Vallejo City Unified" ~ "District E"
+    )
+  ) |>
+  arrange(district_name) |> 
+  # Removed names_prefix so the columns are just the academic years
+  pivot_wider(names_from = academic_year, values_from = "Indicator/Groups")
+
+# Figure out exactly how many year columns exist so the header spans perfectly
+num_year_columns <- ncol(counts_wide) - 1
+
+# Build the flextable
+counts_wide |>
+  flextable() |>
+  set_header_labels(district_name = "District") |>
+  # Add the spanning top header
+  add_header_row(
+    values = c(
+      "", # Empty space above "District"
+      "Count of red indicator/student group combinations where s < h" # The long title
+    ),
+    colwidths = c(1, num_year_columns) # 1 column for District, rest for the title
+  ) |>
+  # Center align the new top header so it looks balanced over the years
+  align(i = 1, part = "header", align = "center") |>
+  # Add a horizontal line under the spanning header for visual separation
+  hline(i = 1, j = 2:(num_year_columns + 1), part = "header", border = officer::fp_border(color = "black", width = 1)) |>
+  autofit()
+
+```
+
+```{r group_bars}
+#| echo: false
+
+homeless_greater_than_change |>
+  filter(
+    academic_year == "2022-23",
+    district_name == "Fairfield-Suisun Unified",
+    indicator == "suspension"
+  ) |> 
+    mutate(students_to_orange = students_to_orange * -1) |> 
+  # fct_reorder makes the chart look much cleaner by sorting bars by size
+  ggplot(aes(y = fct_reorder(reporting_long, currnumer))) +
+  
+  # Base bar: Added alpha to make the solid colors a bit softer so outlines pop
+  geom_col(aes(x = currnumer, fill = reporting_long), alpha = 0.5) +
+  
+  # Overlay 1: fill and color moved OUTSIDE aes() to make them literal
+  geom_col(
+    aes(x = homeless_student_enrollment), 
+    fill = "transparent", 
+    color = "blue", 
+    linewidth = 1
+  ) +
+  
+  # Overlay 2: Same trick here for the orange boxes
+  geom_col(
+    aes(x = students_to_orange), 
+    fill = "transparent", 
+    color = "darkorange", 
+    linewidth = 1
+  ) +
+  
+  # Labels and text
+  labs(
+    title = "Suspension Status vs. Homeless Youth Overlap",
+    subtitle = "Sample Solano District (2022-23)",
+    x = "Number of Students",
+    y = NULL,
+    caption = "Solid Fill: Total suspended students in group.\nBlue Box: Students in this student group who are also in the Homeless Youth group.\nOrange Box: Reduction in suspensions needed to reach the Orange tier."
+  ) +
+  
+  theme_minimal() +
+  theme(
+    # Disable the legend globally
+    legend.position = "none",
+    
+    # Text sizing and formatting
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic", margin = margin(b = 10)),
+    plot.caption = element_text(size = 10, hjust = 0, color = "gray30", margin = margin(t = 15)),
+    
+    axis.text.y = element_text(size = 11, color = "black"),
+    axis.text.x = element_text(size = 11),
+    axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10)),
+    
+    # Remove horizontal grid lines for a cleaner bar chart appearance
+    panel.grid.major.y = element_blank()
+  )
+
+```
+
+```{r group_bars_2}
+#| echo: false
+
+homeless_greater_than_change |>
+  filter(
+    academic_year == "2022-23",
+    district_name == "Fairfield-Suisun Unified",
+    indicator == "suspension"
+  ) |> 
+  mutate(students_to_orange = students_to_orange * -1) |> 
+  ggplot(aes(y = fct_reorder(reporting_long, currnumer))) +
+  
+  # Base bar: Anchored at 0, ends at currnumer
+  geom_col(aes(x = currnumer, fill = reporting_long), alpha = 0.5) +
+  
+  # Overlay 1: Blue Box
+  geom_tile(
+    aes(
+      x = currnumer - (students_to_orange + (0.01 * homeless_student_enrollment)), 
+      width = homeless_student_enrollment
+    ), 
+    height = 0.9, # 0.9 perfectly matches standard geom_col thickness
+    fill = "transparent", 
+    color = "blue", 
+    linewidth = 1
+  ) +
+  
+  # Overlay 2: Orange Box flush to the right edge of the base bar
+  geom_tile(
+    aes(
+      x = currnumer - (students_to_orange / 2), 
+      width = students_to_orange
+    ), 
+    height = 0.9, 
+    fill = "transparent", 
+    color = "darkorange", 
+    linewidth = 1
+  ) +
+  
+  # Labels and text
+  labs(
+    title = "Suspension Status vs. Homeless Youth Overlap",
+    subtitle = "Sample Solano District (2022-23)",
+    x = "Number of Students",
+    y = NULL,
+    caption = "Solid Fill: Total suspended students in group.\nBlue Box: Students in this group who are also in the Homeless Youth group.\nOrange Box: Reduction in suspensions needed to reach the Orange tier."
+  ) +
+  
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic", margin = margin(b = 10)),
+    plot.caption = element_text(size = 10, hjust = 0, color = "gray30", margin = margin(t = 15)),
+    axis.text.y = element_text(size = 11, color = "black"),
+    axis.text.x = element_text(size = 11),
+    axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10)),
+    panel.grid.major.y = element_blank()
+  )
+
+```
+
+```{r group_bars_3}
+#| echo: false
+
+homeless_greater_than_change |>
+  filter(
+    academic_year == "2022-23",
+    district_name == "Fairfield-Suisun Unified",
+    indicator == "suspension"
+  ) |> 
+  mutate(students_to_orange = students_to_orange * -1) |> 
+  ggplot(aes(y = fct_reorder(reporting_long, currnumer))) +
+  
+  # NEW: Background bar showing total students (currdenom)
+  # Plotted first so it sits behind everything else
+  geom_col(aes(x = currdenom), fill = "gray90", width = 0.9) +
+  
+  # Base bar: Anchored at 0, ends at currnumer (Suspended students)
+  geom_col(aes(x = currnumer, fill = reporting_long), alpha = 0.6, width = 0.9) +
+  
+  # Overlay 1: Blue Box flush to the right edge of the currnumer bar
+  geom_tile(
+    aes(
+      x = currnumer - (homeless_student_enrollment/8), 
+      width = homeless_student_enrollment
+    ), 
+    height = 0.9, 
+    fill = "transparent", 
+    color = "blue", 
+    linewidth = 1
+  ) +
+  
+  # Overlay 2: Orange Box flush to the right edge of the currnumer bar
+  geom_tile(
+    aes(
+      x = currnumer - (students_to_orange / 2), 
+      width = students_to_orange
+    ), 
+    height = 0.9, 
+    fill = "transparent", 
+    color = "darkorange", 
+    linewidth = 1
+  ) +
+  
+  # Labels and text
+  labs(
+    title = "Suspension Status vs. Homeless Youth Overlap",
+    subtitle = "Sample Solano District (2022-23)",
+    x = "Number of Students",
+    y = NULL,
+    caption = "Gray Background: Total students in group.\nColored Fill: Total suspended students in group.\nBlue Box: Students in this group who are also in the Homeless Youth group.\nOrange Box: Reduction in suspensions needed to reach the Orange tier."
+  ) +
+  
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic", margin = margin(b = 10)),
+    plot.caption = element_text(size = 10, hjust = 0, color = "gray30", margin = margin(t = 15)),
+    axis.text.y = element_text(size = 11, color = "black"),
+    axis.text.x = element_text(size = 11),
+    axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10)),
+    panel.grid.major.y = element_blank()
+  )
+
+```
+

@@ -1,0 +1,16 @@
+---
+format:
+  docx:
+    reference-doc: scoe-are-report.docx
+    fig-width: 8
+    fig-dpi: 300
+editor: visual
+---
+
+This report was created by the Solano County Office of Education Assessment Research and Evaluation team who are happy to provide additional assistance to homeless and foster youth liaisons in gathering and analyzing data. Email Joseph Knapp jknapp\@solanocoe.net for support.
+
+## Data Resources
+
+#### CALPADS
+
+The CA Longitudinal Pupil Achievement Data System (CALPADS) is the main interface between schools and the CA student information system. Student data comes from this system including information about housing status. Housing information

@@ -1,0 +1,555 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  10pt,
+  letterpaper,
+  DIV=11,
+  numbers=noendperiod]{scrartcl}
+
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else  
+    % xetex/luatex font selection
+    \setmainfont[]{Ebrima}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[tmargin=0.5in,bmargin=0.75in]{geometry}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+% Make \paragraph and \subparagraph free-standing
+\makeatletter
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+\makeatother
+
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+\usepackage{fontspec}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{colortbl}
+\usepackage{hhline}
+\newlength\Oldarrayrulewidth
+\newlength\Oldtabcolsep
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{wrapfig}
+\KOMAoption{captions}{tableheading}
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+
+\author{}
+\date{}
+
+\begin{document}
+
+
+\includegraphics[width=1.32292in,height=\textheight]{www/SCOE_Logo.jpg}\hfill
+
+\section{Technical Assistance and Supports Serving Students Experiencing
+Homelessness and Foster Youth in Fairfield-Suisun
+Unified}\label{technical-assistance-and-supports-serving-students-experiencing-homelessness-and-foster-youth-in-fairfield-suisun-unified}
+
+This report was prepared by the Assessment Research and Evaluation team
+from the Solano County Office of Education to share with local LEAs
+options for supporting their students -- especially those experiencing
+homelessness and foster youth. The 2022-23 census day enrollment for
+Fairfield-Suisun Unified was 70 foster youth and 250 students reported
+as experiencing homelessness. The cumulative enrollment for students
+experiencing homelessness was 473. These totals are greater in most
+cases than the number of students needed to show improvements across
+several student groups.
+
+The 2023 California School Dashboard (Dashboard), released on December
+15, 2023, reflects a full return of California's accountability system
+with the reporting of Status (current year data), Change (the difference
+from prior year data), and Performance Levels (colors) for all state
+indicators except the College/Career Readiness indicator. The analysis
+in this report includes dashboard indicators where foster youth and
+students experiencing homelessness were assigned a color of red (the
+lowest performance level). Then, for all student groups that were red
+for those indicators, we calculated the improvement it would take for
+each group to move from red to orange in that indicator if the number of
+students stays the same. That analysis is summarized in the table below.
+
+\global\setlength{\Oldarrayrulewidth}{\arrayrulewidth}
+
+\global\setlength{\Oldtabcolsep}{\tabcolsep}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+
+
+\providecommand{\ascline}[3]{\noalign{\global\arrayrulewidth #1}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\begin{longtable}[c]{|p{1.10in}|p{0.80in}|p{1.00in}|p{1.00in}|p{0.90in}|p{1.40in}}
+\caption{Showing how the improvement needed for student groups to go from red to
+orange.}\tabularnewline
+
+
+
+
+\ascline{1.5pt}{666666}{1-6}
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Student\ Group}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Denominator}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Indicator}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Current\ Status}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Homeless\ student\ Enrollments}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Change\ in\ number\ of\ students\ needed\ to\ get\ group\ to\ orange}}}} \\
+
+\ascline{1.5pt}{666666}{1-6}\endfirsthead 
+
+\ascline{1.5pt}{666666}{1-6}
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Student\ Group}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Denominator}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Indicator}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Current\ Status}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Homeless\ student\ Enrollments}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Change\ in\ number\ of\ students\ needed\ to\ get\ group\ to\ orange}}}} \\
+
+\ascline{1.5pt}{666666}{1-6}\endhead
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Homeless\ Youth}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{479}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{suspension}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{11.9\%}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{473}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-2}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Foster\ Youth}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{28}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{ELA}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-89.8}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{1}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Foster\ Youth}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{27}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Math}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-117.6}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{1}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Foster\ Youth}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{62}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{absenteeism}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{43.5\%}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-1}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Asian}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{952}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{absenteeism}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{22.4\%}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{9}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-5}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Black/African\ American}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{1,363}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Math}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-113.5}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{115}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{37}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Black/African\ American}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{2,943}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{suspension}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{12.5\%}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{115}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-9}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{American\ Indian\ or\ Alaska\ Native}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{33}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{absenteeism}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{39.4\%}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{1}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-1}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Students\ with\ Disabilities}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{1,543}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{ELA}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-113.5}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{77}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{41}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Students\ with\ Disabilities}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{1,534}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Math}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-141.8}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{77}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{33}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Students\ with\ Disabilities}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{3,255}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{suspension}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{8.8\%}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{77}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 1.4in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{-10}}}} \\
+
+\ascline{1.5pt}{666666}{1-6}
+
+
+
+\end{longtable}
+
+
+
+\arrayrulecolor[HTML]{000000}
+
+\global\setlength{\arrayrulewidth}{\Oldarrayrulewidth}
+
+\global\setlength{\tabcolsep}{\Oldtabcolsep}
+
+\renewcommand*{\arraystretch}{1}
+
+\textbf{How to read the table:} The homeless youth student group has a
+color of red for the following indicators: suspension. The foster youth
+student group has a color of red for the following indicators: ELA,
+Math, and absenteeism. Any other student groups that were red for these
+indicators were included in the table above to show student groups that
+may benefit by providing additional support to foster youth and students
+experiencing homelessness in Fairfield-Suisun Unified.
+
+479 students from the Homeless Youth group were included in the
+calculation -- the denominator. The current status is 11.9\%. The final
+column indicates the change in numerator that would lead to a
+performance level of orange on next year's dashboard if the number of
+students enrolled remains the same. \textbf{This means, if 2 fewer
+students} are suspended, the \textbf{Homeless Youth} student group would
+be orange on next year's dashboard for \textbf{suspension}.
+Additionally:
+
+\begin{itemize}
+\item
+  If \textbf{1 more students} meet the standard on the CAASPP ELA exam,
+  the \textbf{Foster Youth} student group would be orange on next year's
+  dashboard for \textbf{ELA}.
+\item
+  If \textbf{1 more students} meet the standard on the CAASPP math exam,
+  the \textbf{Foster Youth} student group would be orange on next year's
+  dashboard for \textbf{Math}.
+\item
+  If \textbf{1 fewer students} are chronically absent, the
+  \textbf{Foster Youth} student group would be orange on next year's
+  dashboard for \textbf{absenteeism}.
+\item
+  If \textbf{5 fewer students} are chronically absent, the
+  \textbf{Asian} student group would be orange on next year's dashboard
+  for \textbf{absenteeism}.
+\item
+  If \textbf{37 more students} meet the standard on the CAASPP math
+  exam, the \textbf{Black/African American} student group would be
+  orange on next year's dashboard for \textbf{Math}.
+\item
+  If \textbf{9 fewer students} are suspended, the \textbf{Black/African
+  American} student group would be orange on next year's dashboard for
+  \textbf{suspension}.
+\item
+  If \textbf{1 fewer students} are chronically absent, the
+  \textbf{American Indian or Alaska Native} student group would be
+  orange on next year's dashboard for \textbf{absenteeism}.
+\item
+  If \textbf{41 more students} meet the standard on the CAASPP ELA exam,
+  the \textbf{Students with Disabilities} student group would be orange
+  on next year's dashboard for \textbf{ELA}.
+\item
+  If \textbf{33 more students} meet the standard on the CAASPP math
+  exam, the \textbf{Students with Disabilities} student group would be
+  orange on next year's dashboard for \textbf{Math}.
+\item
+  If \textbf{10 fewer students} are suspended, the \textbf{Students with
+  Disabilities} student group would be orange on next year's dashboard
+  for \textbf{suspension}.
+\end{itemize}
+
+Analysis into the outcome data for foster youth and students
+experiencing homelessness at Fairfield-Suisun Unified suggests that
+supporting these vulnerable populations may also improve the standing of
+other groups. Differentiated Assistance eligibility presents an
+opportunity for individually designed assistance, to address identified
+performance issues, including significant disparities in performance
+among student groups\footnote{https://www.cde.ca.gov/sp/sw/t1/csss.asp}.
+
+\subsection{Student Support Resources in Solano
+County}\label{student-support-resources-in-solano-county}
+
+\textbf{Restorative Practices (alternative to suspension)} Restorative
+Practices (RP) are grounded in traditional practices of indigenous
+communities from around the world that underscore the value of respect,
+compassion, dignity, and inclusion of all members of the community. RP
+promotes positive culture by strengthening the quality of relationships
+across the school community. It includes interventions when harm has
+occurred, as well as practices that prevent harm by building a sense of
+belonging, safety, and shared social responsibility throughout the
+school community. Conflict and behavior challenges are viewed through
+the lens of restorative justice philosophy; one that brings all parties
+affected by an incident together in an inclusive process to discover the
+root cause and impact of the behavior, with the intention to repair
+relationships and restore the community. If you would like your
+school/district to be trained or have any other questions, please reach
+out to Kerri Berkowitz at
+\href{mailto:kberkowitz@solanocoe.net}{\nolinkurl{kberkowitz@solanocoe.net}}.
+
+\textbf{Neurosequential Model in Education (NME) Pilot Program} The
+Neurosequential Model in Education (NME) draws upon the NMT (a
+neurodevelopmentally-informed, biologically respectful perspective on
+human development and functioning) to help educators understand student
+behavior and performance. The goals of NME are to educate faculty and
+students in basic concepts of neurosequential development and then teach
+them how to apply this knowledge to the teaching and learning process.
+NME is not a specific ``intervention;'' it is a way to educate school
+staff about brain development and developmental trauma and then to
+further teach them how to apply that knowledge to their work with
+students in and outside the classroom, particularly those students with
+adverse childhood experiences. Solano County Office of Education has
+been recently accepted into the 2024 NME Pilot Program with the
+California Department of Education -Foster Youth Education Unit. To
+learn more about the pilot program, please contact Akon M. Walker at
+\href{mailto:awalker@solanocoe.net}{\nolinkurl{awalker@solanocoe.net}}.
+
+\textbf{Positive Behavioral Intervention and Supports} Positive
+Behavioral Interventions and Supports (PBIS) is a multi-tiered
+instructional behavior framework. It is grounded in a continuum of
+evidence-based practices that are used consistently school-wide, for all
+students by all staff (certificated, classified, and management). When
+schoolwide interventions and strategies are implemented with fidelity,
+unwanted behaviors are prevented, pro-social skills are taught, and new
+skills are reinforced. SCOE provides PBIS training, coaching, and
+support in a variety of flexible formats. If you would like your
+school/district to be trained or have other questions, please reach out
+to Dr.~Jen Buzolich at
+\href{mailto:jbuzolich@solanocoe.net}{\nolinkurl{jbuzolich@solanocoe.net}}
+or Shomonique Johnson at
+\href{mailto:sjohnson@solanocoe.net}{\nolinkurl{sjohnson@solanocoe.net}}.
+
+\textbf{Data Analysis} This report was prepared by the Assessment
+Research and Evaluation team in the Solano County Office of Education.
+They can provide continued monitoring and reporting including more
+detailed analysis. Email Dr.~Tacey Rodgers
+\href{mailto:trodgers@solanocoe.net}{\nolinkurl{trodgers@solanocoe.net}}
+and Joseph Knapp
+\href{mailto:jknapp@solanocoe.net}{\nolinkurl{jknapp@solanocoe.net}}
+with any questions.
+
+\subsection{Additional details regarding the homeless student population
+in Fairfield-Suisun
+Unified}\label{additional-details-regarding-the-homeless-student-population-in-fairfield-suisun-unified}
+
+The table below presents the numbers of students experiencing
+homelessness in Fairfield-Suisun Unified. The students are categorized
+by their most recently reported dwelling type.\footnote{Based on annual
+  End of Year 3 (EOY 3) data submission in the California Longitudinal
+  Pupil Achievement Data System (CALPADS),
+  \url{https://www.cde.ca.gov/ds/ad/hseinfo.asp}}
+
+\global\setlength{\Oldarrayrulewidth}{\arrayrulewidth}
+
+\global\setlength{\Oldtabcolsep}{\tabcolsep}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+
+
+\providecommand{\ascline}[3]{\noalign{\global\arrayrulewidth #1}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\begin{longtable}[c]{|p{1.10in}|p{0.80in}|p{0.80in}|p{0.80in}|p{0.80in}|p{0.90in}|p{0.80in}}
+\caption{Living situations of students experiencing homelessness}\tabularnewline
+
+
+
+
+\ascline{1.5pt}{666666}{1-7}
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Race/Ethnicity}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Cumulative\ Enrollment}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Homeless\ student\ enrollment}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Temporarily\ doubled-up\ (percent)}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Temporary\ shelters\ (percent)}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Hotels/Motels\ (percent)}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Temporarily\ unsheltered\ (percent)}}}} \\
+
+\ascline{1.5pt}{666666}{1-7}\endfirsthead 
+
+\ascline{1.5pt}{666666}{1-7}
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Race/Ethnicity}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Cumulative\ Enrollment}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Homeless\ student\ enrollment}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Temporarily\ doubled-up\ (percent)}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Temporary\ shelters\ (percent)}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Hotels/Motels\ (percent)}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{\global\setmainfont{Arial}{Temporarily\ unsheltered\ (percent)}}}} \\
+
+\ascline{1.5pt}{666666}{1-7}\endhead
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Asian}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{1,343}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{9}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Black/African\ American}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{2,939}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{115}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{69.6}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{7.8}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{13.9}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{8.7}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Did\ not\ Report}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{38}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{1}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Filipino}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{1,927}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{10}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Hispanic\ or\ Latino}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{10,010}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{263}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{84.8}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{3.4}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{8.0}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{3.8}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{American\ Indian\ or\ Alaska\ Native}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{61}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{1}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{*}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Pacific\ Islander}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{241}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{13}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{92.3}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{7.7}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{0.0}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{0.0}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{Two\ or\ More\ Races}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{2,092}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{29}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{55.2}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{6.9}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{24.1}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{13.8}}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 1.1in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{White}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{2,966}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{32}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{62.5}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{15.6}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.9in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{12.5}}}} & \multicolumn{1}{>{\raggedleft}m{\dimexpr 0.8in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{3}\selectfont{\global\setmainfont{Arial}{9.4}}}} \\
+
+\ascline{1.5pt}{666666}{1-7}
+
+
+
+\end{longtable}
+
+
+
+\arrayrulecolor[HTML]{000000}
+
+\global\setlength{\arrayrulewidth}{\Oldarrayrulewidth}
+
+\global\setlength{\tabcolsep}{\Oldtabcolsep}
+
+\renewcommand*{\arraystretch}{1}
+
+
+
+
+\end{document}

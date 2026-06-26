@@ -1,0 +1,24 @@
+# IDE and History
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# Data
+data/
+*.csv
+*.xlsx
+*.duckdb
+
+# Documents
+*.pdf
+*.docx
+
+# Quarto outputs and caches
+.quarto/
+*_cache/
+*_files/
+
+# OS generated files
+.DS_Store
+Thumbs.db

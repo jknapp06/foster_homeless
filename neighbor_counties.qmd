@@ -1,0 +1,123 @@
+---
+format: 
+    docx:
+      reference-doc: scoe-are-report.docx
+      fig-dpi: 300
+params:
+  lea: "Vallejo City Unified"
+warnings: false
+---
+
+```{r setup}
+#| include: false
+
+# 1 Solano County Number and percent of foster youth on census day last three years
+# 2 Solano County Number and percent of of foster youth suspended for last three years
+# 3 Solano County Number and percent of of foster youth chronically absent for last three year
+# 4 Repeat for neighboring counties? Yolo? Contra Costa? Napa?
+# 5 LEA LCAP goal language for foster youth
+# 6 LEA Number and percent of foster youth on census day last three years
+# 7 LEA Number and percent of of foster youth suspended for last three years
+# 8 LEA Number and percent of of foster youth chronically absent for last three years
+# 9 By school Number and percent of of foster youth suspended for last three years
+# 10 By school LEA Number and percent of of foster youth chronically absent for last three year
+
+library(tidyverse)
+library(ggrepel)
+library(here)
+
+dashboard <- read_csv(here(
+  "..",
+  "CADashboard",
+  "data",
+  "ca_dashboard.csv"
+))
+enrollment <- read_csv(here("..", "enrollment", "data", "enrollment_info.csv"))
+
+if (interactive()) {
+  params <- rmarkdown::yaml_front_matter(
+    rstudioapi::getSourceEditorContext()$path
+  )$params
+}
+
+all_blue <- "#0C7BDC"
+foster_yellow <- "#FFC20A"
+
+all_foster_colors <- c(
+  "Foster Youth" = foster_yellow,
+  "All students" = all_blue
+)
+
+```
+
+```{r neighbor_counties}
+#| echo: false
+
+counties <- c("00 STATE", "Contra Costa", "Solano", "CA State Aggregate")
+
+neighbor_enrollment <-
+  enrollment |>
+  filter(
+    charter == "ALL",
+    countyname %in% counties,
+    reportingcategorylong %in% c("Total", "Foster Youth")
+  ) |>
+  select(
+    academicyear,
+    countyname,
+    districtname,
+    schoolname,
+    reportingcategorylong,
+    total_enr
+  ) |>
+  pivot_wider(
+    names_from = reportingcategorylong,
+    values_from = total_enr
+  ) |>
+  mutate(
+    pct_foster = `Foster Youth` / `Total` * 100
+  )
+
+```
+
+```{r neighbor_dashboard}
+#| echo: false
+
+neighbor_dashboard <-
+  dashboard |>
+  filter(
+    reportingyear == "2025",
+    countyname %in% counties,
+    rtype == "X" | rtype == "D" | (rtype == "S" & charter_flag == "Y"),
+    student_group_long %in% c("All students", "Foster Youth"),
+    indicator %in%
+      c(
+        "suspension",
+        "absenteeism"
+      )
+  ) |>
+  select(
+    countyname,
+    districtname,
+    schoolname,
+    student_group_long,
+    indicator,
+    currnumer,
+    currdenom,
+    currstatus
+  )
+  
+neighbor_aggregates <-
+  neighbor_dashboard  |>
+  group_by(
+    countyname,
+    student_group_long,
+    indicator
+  ) |>
+  summarise(
+    total_numer = sum(currnumer, na.rm = TRUE),
+    total_denom = sum(currdenom, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(estimated_status = total_numer / total_denom * 100)
+```

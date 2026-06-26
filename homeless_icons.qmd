@@ -1,0 +1,285 @@
+---
+title: "Homeless Icons"
+format: 
+  html:
+    css: weepeople.css
+editor: visual
+params:
+  year: "2022-23"
+  lea: "Dixon Unified"
+  student_group: "homeless"
+---
+
+```{=html}
+<style>
+@font-face {
+  font-family: 'weepeople';
+  src: url('fonts/weepeople.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+</style>
+```
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(ggtext)
+library(ggdist)
+
+wee_letters <- c("Q","b","V", "h")
+
+percent_indicators <- c("absenteeism", "graduation", "suspension", "college/career")
+
+homeless <- read_csv("data/homeless.csv") %>% 
+  filter(county_name == "Solano")
+dashboard <- read_csv("data/ca_dashboard.csv")
+enrollment <-  read_csv("data/enrollment.csv") %>% 
+  select(-ends_with("code")) %>% 
+  mutate(academic_year = paste0(reportingyear - 1, "-", reportingyear-2000))
+solano_to_orange <- read_csv("data/solano_to_orange.csv") %>% 
+  mutate(currstatus = if_else(indicator %in% percent_indicators,
+                              paste0(currstatus, "%"), as.character(currstatus)))
+
+homeless_in_lea <- 
+  homeless %>%
+  filter(academic_year == params$year,
+         (district_name == params$lea & aggregate_level == "D" 
+         & charter_school == "All" & dass == "All") |
+           (aggregate_level == "S" & school_name == params$lea))
+
+homeless_count_cumulative <-
+  homeless_in_lea %>%
+  filter(reporting_long == "Total Students") %>% 
+  pull(homeless_student_enrollment) %>% 
+  nth(1)
+
+selected_to_orange <- 
+  solano_to_orange %>% 
+  filter(color == 1,
+         academic_year == params$year,
+         (school_name == params$lea & aggregate_level == "S") |
+           (district_name == params$lea & aggregate_level == "D")) %>% 
+  mutate(reporting_long = fct_relevel(as_factor(reporting_long), 
+                                      "Homeless Youth",
+                                      "Foster Youth")) %>% 
+  arrange(reporting_long)
+
+homeless_count <-
+  selected_to_orange %>%
+  filter(reporting_long == "Homeless Youth") %>% 
+  pull(homeless_student_enrollment) %>% 
+  nth(1)
+
+total_enrollment <- 
+  selected_to_orange %>%
+  filter(reporting_long == "Homeless Youth") %>% 
+  pull(cumulative_enrollment) %>% 
+  nth(1)
+```
+
+```{r total_students}
+#| echo: false
+#| output: asis
+
+# Function to create rows of icons with better formatting
+display_people_icons <- function(count, 
+                                icons_per_row = 100, 
+                                icon_size = 12,
+                                icon_color = "slategray",
+                                title = NULL) {
+  
+  # Sample random people icons
+  people_icons <- sample(wee_letters, count, replace = TRUE)
+  
+  # Split into rows for better display
+  rows <- ceiling(count / icons_per_row)
+  
+  # Create HTML output with proper spacing and wrapping
+  output <- ""
+  
+  # Add title if provided - now OUTSIDE the weepeople font div
+  if (!is.null(title)) {
+    output <- paste0(output, 
+                    "<h4 style='margin-bottom: 10px; font-family: sans-serif;'>", 
+                    title, 
+                    "</h4>")
+  }
+  
+  # Start the weepeople div after the title
+  output <- paste0(output, "<div style='font-family: weepeople;'>")
+  
+  # Add the rows of icons
+  for (i in 1:rows) {
+    start_idx <- (i-1) * icons_per_row + 1
+    end_idx <- min(i * icons_per_row, count)
+    
+    # Get icons for this row
+    row_icons <- people_icons[start_idx:end_idx]
+    
+    # Join with small spaces between icons
+    row_text <- paste(row_icons, collapse = "")
+    
+    # Add row with styling
+    output <- paste0(output, 
+                    "<div style='font-size: ", 
+                    icon_size, 
+                    "pt; color: ", 
+                    icon_color, 
+                    "; margin-bottom: -3px; letter-spacing: -2px;'>",
+                    row_text,
+                    "</div>")
+  }
+  
+  output <- paste0(output, "</div>")
+  cat(output)
+}
+
+# Display the icons with a title
+display_people_icons(
+  count = total_enrollment,
+  icons_per_row = 150,
+  icon_size = 8,
+  title = paste0("Total Student Enrollment: ", total_enrollment)
+)
+```
+
+```{r homeless}
+#| echo: false
+#| output: asis
+
+# Function to create a combined display with different colors
+display_combined_people_icons <- function(count_highlighted, 
+                                         count_total,
+                                         icons_per_row = 100, 
+                                         icon_size = 8,
+                                         highlight_color = "purple",
+                                         regular_color = "slategray",
+                                         title = NULL) {
+  
+  # Calculate the non-highlighted count
+  count_regular <- count_total - count_highlighted
+  
+  # Generate all people icons
+  highlighted_icons <- sample(wee_letters, count_highlighted, replace = TRUE)
+  regular_icons <- sample(wee_letters, count_regular, replace = TRUE)
+  
+  # Combine all icons (highlighted first, then regular)
+  all_icons <- c(highlighted_icons, regular_icons)
+  
+  # Calculate total rows needed
+  rows <- ceiling(count_total / icons_per_row)
+  
+  # Create HTML output
+  output <- ""
+  
+  # Add title if provided - outside the weepeople font div
+  if (!is.null(title)) {
+    output <- paste0(output, 
+                    "<h4 style='margin-bottom: 10px; font-family: sans-serif;'>", 
+                    title, 
+                    "</h4>")
+  }
+  
+  # Start the weepeople div after the title
+  output <- paste0(output, "<div style='font-family: weepeople; line-height: 0.7;'>")
+  
+  # Process each row
+  for (i in 1:rows) {
+    start_idx <- (i-1) * icons_per_row + 1
+    end_idx <- min(i * icons_per_row, count_total)
+    
+    # Get icons for this row
+    row_icons <- all_icons[start_idx:end_idx]
+    
+    # Determine which icons in this row should be highlighted
+    highlight_end_in_row <- max(0, min(count_highlighted - (i-1) * icons_per_row, icons_per_row))
+    
+    # Start a div for this row with proper line height and margin
+    output <- paste0(output, "<div style='margin: 0; padding: 0; line-height: 0.8;'>")
+    
+    # If there are highlighted icons in this row
+    if (highlight_end_in_row > 0) {
+      # Add highlighted icons
+      highlighted_text <- paste(row_icons[1:highlight_end_in_row], collapse = "")
+      output <- paste0(output, 
+                      "<span style='font-size: ", 
+                      icon_size, 
+                      "pt; color: ", 
+                      highlight_color, 
+                      "; letter-spacing: -2px;'>",
+                      highlighted_text,
+                      "</span>")
+    }
+    
+    # If there are regular icons in this row
+    if (highlight_end_in_row < length(row_icons)) {
+      # Add regular icons
+      regular_text <- paste(row_icons[(highlight_end_in_row + 1):length(row_icons)], collapse = "")
+      output <- paste0(output, 
+                      "<span style='font-size: ", 
+                      icon_size, 
+                      "pt; color: ", 
+                      regular_color, 
+                      "; letter-spacing: -2px;'>",
+                      regular_text,
+                      "</span>")
+    }
+    
+    # Close the row div
+    output <- paste0(output, "</div>")
+  }
+  
+  output <- paste0(output, "</div>")
+  cat(output)
+}
+
+# Display the combined icons with homeless students in purple
+display_combined_people_icons(
+  count_highlighted = homeless_count,
+  count_total = total_enrollment,
+  icons_per_row = 150,
+  icon_size = 8,
+  highlight_color = "purple",
+  regular_color = "slategray",
+  title = paste0("Student Enrollment: ", total_enrollment, " (Homeless: ", homeless_count, ")")
+)
+
+```
+
+```{r group_enrollment}
+#| include: false
+
+group_enrollment <- 
+  selected_to_orange %>% 
+  select(reporting_long, cumulative_enrollment, 
+         homeless_student_enrollment, students_to_orange) %>% 
+  mutate(group_enrollment = if_else(reporting_long == "Homeless Youth", homeless_student_enrollment, cumulative_enrollment),
+         cumulative_enrollment = total_enrollment) %>% 
+  pivot_longer(cols = c(cumulative_enrollment, 
+                        group_enrollment, 
+                        homeless_student_enrollment),
+               names_to = "count_type",
+               values_to = "enrollment")
+
+
+```
+
+```{r other_groups}
+
+suspended
+
+# Display the combined icons with homeless students in purple
+display_combined_people_icons(
+  count_highlighted = homeless_count,
+  count_total = total_enrollment,
+  icons_per_row = 150,
+  icon_size = 8,
+  highlight_color = "purple",
+  regular_color = "slategray",
+  title = paste0("Student Enrollment: ", total_enrollment, " (Homeless: ", homeless_count, ")")
+)
+
+
+```

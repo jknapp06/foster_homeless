@@ -1,0 +1,269 @@
+---
+format: 
+  pdf:
+    mainfont: Ebrima
+    fontsize: 10pt
+    keep-tex: true
+    margin-top: 0.5in
+    margin-bottom: 0.75in
+editor: visual
+params:
+  year: "2023-24"
+  lea: "Fairfield-Suisun Unified"
+  student_group: "homeless"
+---
+
+![](www/SCOE_Logo.jpg){fig-align="left" width="127"}
+
+# Technical Assistance and Supports Serving Students Experiencing Homelessness and Foster Youth in `r params$lea`
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(flextable)
+
+percent_indicators <- c("absenteeism", "graduation", "suspension", "college/career")
+
+homeless <- read_csv("data/homeless.csv") %>% 
+  filter(county_name == "Solano")
+
+solano_to_orange <- read_csv("data/solano_to_orange.csv") %>% 
+  mutate(currstatus = if_else(indicator %in% percent_indicators,
+                              paste0(currstatus, "%"), as.character(currstatus)))
+
+homeless_in_lea <- 
+  homeless %>%
+  filter(academic_year == params$year,
+         (district_name == params$lea & aggregate_level == "D" 
+         & charter_school == "All" & dass == "All") |
+           (aggregate_level == "S" & school_name == params$lea))
+
+homeless_count_cumulative <-
+  homeless_in_lea %>%
+  filter(reporting_long == "Total Students") %>% 
+  pull(homeless_student_enrollment) %>% 
+  nth(1)
+
+selected_to_orange <- 
+  solano_to_orange %>% 
+  filter(color == 1,
+         academic_year == params$year,
+         (school_name == params$lea & aggregate_level == "S") |
+           (district_name == params$lea & aggregate_level == "D")) %>% 
+  mutate(reporting_long = fct_relevel(as_factor(reporting_long), 
+                                      "Homeless Youth",
+                                      "Foster Youth")) %>% 
+  arrange(reporting_long)
+
+foster_count <-
+  selected_to_orange %>%
+  filter(reporting_long == "Foster Youth",
+         !is.na(student_count)) %>% 
+  pull(student_count) %>% 
+  nth(1)
+
+homeless_count <-
+  selected_to_orange %>%
+  filter(reporting_long == "Homeless Youth",
+         !is.na(student_count)) %>% 
+  pull(student_count) %>% 
+  nth(1)
+  
+```
+
+This report was prepared by the Assessment Research and Evaluation team from the Solano County Office of Education to share with local LEAs options for supporting their students -- especially those experiencing homelessness and foster youth. The 2022-23 census day enrollment for `r params$lea` was `r foster_count` foster youth and `r homeless_count` students reported as experiencing homelessness. The cumulative enrollment for students experiencing homelessness was `r homeless_count_cumulative`. These totals are greater in most cases than the number of students needed to show improvements across several student groups.
+
+The 2023 California School Dashboard (Dashboard), released on December 15, 2023, reflects a full return of California's accountability system with the reporting of Status (current year data), Change (the difference from prior year data), and Performance Levels (colors) for all state indicators except the College/Career Readiness indicator. The analysis in this report includes dashboard indicators where foster youth and students experiencing homelessness were assigned a color of red (the lowest performance level). Then, for all student groups that were red for those indicators, we calculated the improvement it would take for each group to move from red to orange in that indicator if the number of students stays the same. That analysis is summarized in the table below.
+
+```{r homeless_to_orange}
+#| label: homeless_to_orange
+#| echo: FALSE
+#| tbl-cap: "Showing how the improvement needed for student groups to go from red to orange."
+#| cap-location: bottom
+
+homeless_red_indicators <- 
+  selected_to_orange %>% 
+  filter(reporting_long == "Homeless Youth") %>% 
+  pull(indicator)
+
+foster_red_indicators <- 
+  selected_to_orange %>% 
+  filter(reporting_long == "Foster Youth") %>% 
+  pull(indicator)
+
+red_indicators <- 
+  c(homeless_red_indicators,
+            foster_red_indicators) %>% 
+  unique()
+
+selected_to_orange %>%
+  filter(indicator %in% red_indicators) %>% 
+  select(reporting_long, currdenom, indicator, currstatus, 
+         homeless_student_enrollment, students_to_orange) %>% 
+  flextable()%>% 
+  line_spacing(space = 0.3,
+               part = "body") %>% 
+  set_header_labels(
+    reporting_long = "Student Group",
+    currdenom = "Denominator", 
+    indicator = "Indicator",
+    homeless_student_enrollment = "Homeless student Enrollments",
+    currstatus = "Current Status", 
+    students_to_orange = "Change in number of students needed to get group to orange"
+  ) %>% 
+  width(width = c(1.1, 0.8, 1, 1, 0.9,  1.4)) %>%
+  align(align = c("left", "right", "right", "right", 
+                   "right", "right"), part = "all") %>% 
+  fontsize(size = 9, part = "all")
+```
+
+```{r orange_narrative, include = FALSE, results="asis"}
+
+orange <- 
+  selected_to_orange %>% 
+  filter(indicator %in% red_indicators) %>% 
+  mutate(change = case_match(indicator,
+                             "ELA" ~ "meet the standard on the CAASPP ELA exam",
+                             "Math" ~ "meet the standard on the CAASPP math exam",
+                             "ELPI" ~ "meet the standard on the ELPAC",
+                             "absenteeism" ~ "are chronically absent",
+                             "suspension" ~ "are suspended",
+                             "graduation" ~ "graduate",
+                             "college/career" ~ "demonstrate readiness for college/career"))
+
+da_eligible_homeless <- 
+  orange %>% 
+  filter(reporting_long == "Homelesss Youth") %>% 
+  pull(indicator_eligible) %>% 
+  sum() > 0
+
+da_eligible_foster <- 
+  orange %>% 
+  filter(reporting_long == "Foster Youth") %>% 
+  pull(indicator_eligible) %>% 
+  sum() > 0
+
+red_groups <- length(orange$reporting_long)
+
+list_paste <- function(list_of_strings){
+  n_strings <- length(list_of_strings)
+  if (n_strings < 2){
+    new_string = paste(list_of_strings)
+  } else if (n_strings == 2){
+    new_string = paste0(list_of_strings, sep = "", collapse = " and ")
+  } else{
+    new_string = paste0(list_of_strings[c(1:n_strings-1)], collapse = ", ")
+    new_string = paste0(new_string, ", and ", list_of_strings[c(n_strings)], collapse = "")
+  }
+  new_string
+}
+
+homeless_red_string <- 
+  homeless_red_indicators %>% 
+  list_paste()
+
+foster_red_string <- 
+  foster_red_indicators %>% 
+  list_paste()
+
+example = ""
+focus_students = ""
+
+homeless_red_count <- length(homeless_red_indicators)
+foster_red_count <- length(foster_red_indicators)
+
+if(homeless_red_count > 0 & foster_red_count > 0){
+ focus_students = "foster youth and students experiencing homelessness"
+ example = paste0(example, "The homeless youth student group has a color of",
+                 " red for the following indicators: ", homeless_red_string, ". ",
+                 "The foster youth student group has a color of",
+                 " red for the following indicators: ", foster_red_string, ". ")
+} else if(homeless_red_count > 0){
+  focus_students = "students experiencing homelessness"
+  example = paste0(example, "The homeless youth student group has a color of",
+                 " red for the following indicators: ", homeless_red_string, ". ")
+} else if(foster_red_count > 0){
+  focus_students = "foster youth"
+  example = paste0(example, "The foster youth student group has a color of",
+                 " red for the following indicators: ", foster_red_string, ". ")
+}
+
+example = paste0(example, "Any other student groups that were red for these ",
+                 "indicators were included in the table above to show ",
+                 "student groups that may benefit by providing ",
+                 "additional support to ", focus_students, " in ",  params$lea, ".", 
+                 "\n\n",
+                 orange$currdenom[1], " students from the ", orange$reporting_long[1],  
+                 " group were included in",
+                 " the calculation -- the denominator. The current status is ",
+                 orange$currstatus[1], ". The final column indicates the change in",
+                 " numerator that would lead to a performance level of orange ",
+                 "on next year's dashboard if the number of students ",
+                 "enrolled remains the same.",
+                 "\n**This means, if ", abs(orange$students_to_orange[1]), 
+                 if_else(orange$students_to_orange[1] > 0, " more ", " fewer "), 
+                 " students** ", orange$change[1], ", the **",
+                 orange$reporting_long[1], 
+                 "** student group would be orange ",
+                 "on next year's dashboard for **", orange$indicator[1], "**.")
+if(red_groups > 1){
+  example = paste0(example, "\nAdditionally:")
+  for(i in c(2:red_groups)){
+    example = paste0(example, "\n\n*  If **", abs(orange$students_to_orange[i]),
+                   if_else(orange$students_to_orange[i] > 0, " more ", " fewer "), " students** ",
+                   orange$change[i], ", the **", orange$reporting_long[i], "** student group would be orange ",
+                   "on next year's dashboard for **", orange$indicator[i], "**.")
+  }
+}
+
+```
+
+**How to read the table:** `r example`
+
+Analysis into the outcome data for `r focus_students` at `r params$lea` suggests that supporting these vulnerable populations may also improve the standing of other groups. \`r if(da_eligible_homeless \| da_eligible_foster){ "Differentiated Assistance eligibility presents an opportunity for individually designed assistance, to address identified performance issues, including significant disparities in performance among student groups[^1].
+
+[^1]: https://www.cde.ca.gov/sp/sw/t1/csss.asp"}\`
+
+## Student Support Resources in Solano County
+
+**Restorative Practices (alternative to suspension)** Restorative Practices (RP) are grounded in traditional practices of indigenous communities from around the world that underscore the value of respect, compassion, dignity, and inclusion of all members of the community. RP promotes positive culture by strengthening the quality of relationships across the school community. It includes interventions when harm has occurred, as well as practices that prevent harm by building a sense of belonging, safety, and shared social responsibility throughout the school community. Conflict and behavior challenges are viewed through the lens of restorative justice philosophy; one that brings all parties affected by an incident together in an inclusive process to discover the root cause and impact of the behavior, with the intention to repair relationships and restore the community. If you would like your school/district to be trained or have any other questions, please reach out to Kerri Berkowitz at [kberkowitz\@solanocoe.net](mailto:kberkowitz@solanocoe.net).
+
+**Neurosequential Model in Education (NME) Pilot Program** The Neurosequential Model in Education (NME) draws upon the NMT (a neurodevelopmentally-informed, biologically respectful perspective on human development and functioning) to help educators understand student behavior and performance. The goals of NME are to educate faculty and students in basic concepts of neurosequential development and then teach them how to apply this knowledge to the teaching and learning process. NME is not a specific "intervention;" it is a way to educate school staff about brain development and developmental trauma and then to further teach them how to apply that knowledge to their work with students in and outside the classroom, particularly those students with adverse childhood experiences. Solano County Office of Education has been recently accepted into the 2024 NME Pilot Program with the California Department of Education -Foster Youth Education Unit. To learn more about the pilot program, please contact Akon M. Walker at [awalker\@solanocoe.net](mailto:awalker@solanocoe.net).
+
+**Positive Behavioral Intervention and Supports** Positive Behavioral Interventions and Supports (PBIS) is a multi-tiered instructional behavior framework. It is grounded in a continuum of evidence-based practices that are used consistently school-wide, for all students by all staff (certificated, classified, and management). When schoolwide interventions and strategies are implemented with fidelity, unwanted behaviors are prevented, pro-social skills are taught, and new skills are reinforced. SCOE provides PBIS training, coaching, and support in a variety of flexible formats. If you would like your school/district to be trained or have other questions, please reach out to Dr. Jen Buzolich at [jbuzolich\@solanocoe.net](mailto:jbuzolich@solanocoe.net) or Shomonique Johnson at [sjohnson\@solanocoe.net](mailto:sjohnson@solanocoe.net).
+
+**Data Analysis** This report was prepared by the Assessment Research and Evaluation team in the Solano County Office of Education. They can provide continued monitoring and reporting including more detailed analysis. Email Dr. Tacey Rodgers [trodgers\@solanocoe.net](mailto:trodgers@solanocoe.net) and Joseph Knapp [jknapp\@solanocoe.net](mailto:jknapp@solanocoe.net) with any questions.
+
+## Additional details regarding the homeless student population in `r params$lea`
+
+The table below presents the numbers of students experiencing homelessness in `r params$lea`. The students are categorized by their most recently reported dwelling type.[^2]
+
+[^2]: Based on annual End of Year 3 (EOY 3) data submission in the California Longitudinal Pupil Achievement Data System (CALPADS), <https://www.cde.ca.gov/ds/ad/hseinfo.asp>
+
+```{r homeless_table}
+#| label: homeless_status
+#| echo: FALSE
+#| tbl-cap: "Living situations of students experiencing homelessness"
+#| cap-location: bottom
+
+homeless_in_lea %>%
+  filter(reporting_group == "Race/Ethnicity") %>% 
+  select(reporting_long, cumulative_enrollment, homeless_student_enrollment,
+         ends_with("(percent)"), -`missing/unknown_(percent)` ) %>%
+  flextable() %>% 
+  line_spacing(space = 0.3,
+               part = "body") %>% 
+  set_header_labels(
+    reporting_long = "Race/Ethnicity",
+    cumulative_enrollment = "Cumulative Enrollment",
+    homeless_student_enrollment = "Homeless student enrollment",
+    `temporarily_doubled_up_(percent)` = "Temporarily doubled-up (percent)",
+    `temporary_shelters_(percent)` = "Temporary shelters (percent)",
+    `hotels/motels_(percent)` = "Hotels/Motels (percent)",
+    `temporarily_unsheltered_(percent)` = "Temporarily unsheltered (percent)") %>% 
+  width(width = c(1.1, 0.8, 0.8, 0.8, 0.8, 0.9, 0.8)) %>%
+  align(align = c("left", "right", "right", "right", 
+                  "right", "right", "right"), part = "all") %>% 
+  fontsize(size = 9, part = "all")
+  
+
+```

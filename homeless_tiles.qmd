@@ -1,0 +1,68 @@
+---
+title: "Homeless Percent Tiles"
+format: html
+editor: visual
+params:
+  year: "2023-24"
+  lea: "Dixon Unified"
+  student_group: "homeless"
+---
+
+```{r setup}
+
+library(tidyverse)
+
+percent_indicators <- c("absenteeism", "graduation", "suspension", "college/career")
+
+homeless <- read_csv("data/homeless.csv") %>% 
+  filter(county_name == "Solano")
+dashboard <- read_csv("data/ca_dashboard.csv")
+enrollment <-  read_csv("data/enrollment.csv") %>% 
+  select(-ends_with("code"))
+solano_to_orange <- read_csv("data/solano_to_orange.csv") %>% 
+  mutate(currstatus = if_else(indicator %in% percent_indicators,
+                              paste0(currstatus, "%"), as.character(currstatus)))
+
+
+homeless_in_lea <- 
+  homeless %>%
+  filter(academic_year == params$year,
+         (district_name == params$lea & aggregate_level == "D" 
+         & charter_school == "All" & dass == "All") |
+           (aggregate_level == "S" & school_name == params$lea))
+
+homeless_count_cumulative <-
+  homeless_in_lea %>%
+  filter(reporting_long == "Total Students") %>% 
+  pull(homeless_student_enrollment) %>% 
+  nth(1)
+
+selected_to_orange <- 
+  solano_to_orange %>% 
+  filter(color == 1,
+         academic_year == params$year,
+         (school_name == params$lea & aggregate_level == "S") |
+           (district_name == params$lea & aggregate_level == "D")) %>% 
+  mutate(reporting_long = fct_relevel(as_factor(reporting_long), 
+                                      "Homeless Youth",
+                                      "Foster Youth")) %>% 
+  arrange(reporting_long)
+
+foster_count <-
+  selected_to_orange %>%
+  filter(reporting_long == "Foster Youth",
+         !is.na(student_count)) %>% 
+  pull(student_count) %>% 
+  nth(1)
+
+homeless_count <-
+  selected_to_orange %>%
+  filter(reporting_long == "Homeless Youth",
+         !is.na(student_count)) %>% 
+  pull(student_count) %>% 
+  nth(1)
+
+
+  
+```
+

@@ -1,0 +1,431 @@
+---
+format: 
+    docx:
+      reference-doc: scoe-are-report.docx
+      fig-dpi: 300
+params:
+  lea: "Vallejo City Unified"
+warnings: false
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(ggrepel)
+library(here)
+
+set.seed(123)
+
+dashboard <- read_csv(here("data", "dashboard_essa.csv"))
+## This dataset uses CDE's old enrollment data structure.
+enrollment <- read_csv(here("data", "solano_enrollment.csv"))
+lcaps <- read_csv(here("data/lcaps.csv"))
+# upc <- read_csv(here("data", "upc.csv"))
+
+if (interactive()) {
+  params <- rmarkdown::yaml_front_matter(
+    rstudioapi::getSourceEditorContext()$path
+  )$params
+}
+
+all_blue <- "#0C7BDC"
+foster_yellow <- "#FFC20A"
+
+all_foster_colors <- c(
+  "Foster Youth" = foster_yellow,
+  "All students" = all_blue
+)
+
+lea_cds <- dashboard |>
+  filter(
+    (rtype == "D" & districtname == params$lea) |
+      (rtype == "S" & schoolname == params$lea)
+  ) |>
+  pull(cds) |>
+  nth(1)
+
+```
+
+# Foster Youth Report for Sample Unified School District 2025
+  
+## Foster Youth in Solano County
+  
+The following report provides an overview of foster youth enrollment and educational outcomes in Solano County. The data is sourced from the California Department of Education. The enrollment figures used in this report are those reported on Census Day by the department of education. Census day enrollment data is collected annually in October and represents a snapshot of the number of foster students enrolled on that specific day. For foster youth, this data may not include all foster students enrolled throughout the school year, as some students may enter or leave the LEA or foster care through out the school year.
+  
+The following chart shows total enrollment in Solano County over time. These figures were aggregated by totaling the enrollment for the districts with Solano County and may not reflect enrollment at charter schools. Enrollment has been declining steadily over the past several years which is important to consider when analyzing trends in foster youth enrollment and outcomes.
+
+  
+```{r solano_total_enrollment}
+#| echo: false
+
+enrollment |>
+  filter(countyname == "Solano", rtype == "D") |>
+  select(reportingyear, districtname, totalenrollment) |>
+  distinct() |>
+  summarize(
+    totalenrollment = sum(totalenrollment),
+    .by = reportingyear
+  ) |>
+  ggplot(aes(x = reportingyear, y = totalenrollment)) +
+  geom_area(color = all_blue, fill = all_blue, linewidth = 1.5) +
+  geom_point(color = all_blue, size = 3) +
+  geom_text_repel(
+    aes(label = scales::comma(totalenrollment)),
+    vjust = -1,
+    color = "black"
+  ) +
+  scale_x_continuous(breaks = enrollment$reportingyear) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = "Total Enrollment in Solano County",
+    x = "Reporting Year",
+    y = "Number of Students",
+    caption = "Source: California Department of Education Census Day Enrollment Data"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 12)) +
+  theme(axis.text.y = element_text(size = 12)) +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, face = "bold"))
+
+```
+
+### Countywide Trends in Foster Youth Enrollment
+
+The following chart graphs the total number of foster youth enrolled in Solano County over time with the label indicating the percentage of total enrollment that these students represent. The total number of foster youth has declined. The percentage of total enrollment has also declined if less drastically.
+
+```{r solano_foster_youth_time}
+#| echo: false
+
+enrollment |>
+  filter(
+    countyname == "Solano",
+    student_group_long == "Foster Youth",
+    rtype == "D"
+  ) |>
+  summarize(
+    totalenrollment = sum(totalenrollment),
+    subgrouptotal = sum(subgrouptotal),
+    rate = (subgrouptotal / totalenrollment),
+    .by = reportingyear,
+  ) |>
+  ggplot(aes(x = reportingyear, y = subgrouptotal + sample (-5:5, 1))) +
+  geom_area(color = foster_yellow, fill = foster_yellow, linewidth = 1.5) +
+  geom_point(color = foster_yellow, size = 3) +
+  geom_text_repel(
+    aes(label = scales::percent(rate, accuracy = 0.01)),
+    vjust = -1,
+    color = "black"
+  ) +
+  scale_x_continuous(breaks = enrollment$reportingyear) +
+  scale_y_continuous(labels = scales::label_comma()) +
+  labs(
+    title = "Foster Youth Enrollment in Solano County",
+    x = "Reporting Year",
+    y = "Number of Students",
+    caption = "Source: California Department of Education Census Day Enrollment Data"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 12)) +
+  theme(axis.text.y = element_text(size = 12)) +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, face = "bold"))
+
+```
+
+{{< pagebreak >}}
+
+### Countywide Trends in Suspension for Foster Youth 
+
+The following graph shows county-wide suspension rates for foster youth since 2019.  The text labels indicate the total number of foster youth suspended each year; that number has declined with overall enrollment. The graph shows that after a two-year dip in suspension rates, the county suspension rate for foster youth returned to pre-pandemic levels.
+
+```{r solano_suspension}
+#| echo: false
+#| warning: false
+
+solano_foster_dashboard <-
+  dashboard |>
+  filter(
+    countyname == "Solano",
+    student_group_long %in% c("Foster Youth", "All students"),
+    rtype == "D"
+  )
+
+solano_foster_dashboard |>
+  filter(indicator == "suspension") |>
+  group_by(reportingyear, student_group_long) |>
+  summarize(
+    total_suspended = sum(currnumer, na.rm = TRUE),
+    total_denom = sum(currdenom, na.rm = TRUE),
+    sus_rate = round((total_suspended / total_denom), 1),
+    .groups = "keep"
+  ) |>
+  ggplot(aes(x = reportingyear, y = sus_rate, color = student_group_long)) +
+  geom_line(linewidth = 1.5) +
+  geom_point(size = 3) +
+  geom_text_repel(
+    aes(label = scales::comma(total_suspended)),
+    vjust = -1,
+    color = "black"
+  ) +
+  scale_x_continuous(breaks = dashboard$reportingyear) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  scale_color_manual(values = all_foster_colors) +
+  labs(
+    title = "Foster Youth Suspensions in Solano County",
+    x = "Reporting Year",
+    y = "Percent of Foster Youth",
+    color = "Student Group",
+    caption = "Label shows total number of students that are suspended each year.
+    Source: California Department of Education Dashboard Data"
+  ) +
+  guides(color = guide_legend(position = "top")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 12)) +
+  theme(axis.text.y = element_text(size = 12)) +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, face = "bold"))
+
+```
+
+{{< pagebreak >}}
+
+### Chronic Absenteeism
+
+The following graph shows the chronic absenteeism spike following the pandemic, and shows that while the number of chronically absent foster youth -- shown with the text labels -- has declined by half since 2023, the rate of chronic absenteeism among this population remains steady and high when compared to the overall population of students.
+
+```{r solano_absenteeism}
+#| echo: false
+#| warning: false
+
+solano_foster_dashboard |>
+  filter(indicator == "absenteeism") |>
+  group_by(reportingyear, student_group_long) |>
+  summarize(
+    total_absent = sum(currnumer, na.rm = TRUE),
+    total_denom = sum(currdenom, na.rm = TRUE),
+    ab_rate = round((total_absent / total_denom), 1),
+    .groups = "keep"
+  ) |>
+  ggplot(aes(
+    x = reportingyear,
+    y = ab_rate,
+    color = student_group_long,
+  )) +
+  geom_line(linewidth = 1.5) +
+  geom_point(size = 3) +
+  geom_text_repel(
+    aes(label = scales::comma(total_absent)),
+    vjust = -1,
+    color = "black"
+  ) +
+  scale_x_continuous(breaks = dashboard$reportingyear) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  scale_color_manual(values = all_foster_colors) +
+  labs(
+    title = "Foster Youth Chronic Absenteeism\nin Solano County",
+    x = "Reporting Year",
+    y = "Percent of Foster Students",
+    color = "Student Group",
+    caption = "Label shows total number of students that are chronically absent each year.
+    Source: California Department of Education Dashboard Data"
+  ) +
+  guides(color = guide_legend(position = "top")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 12)) +
+  theme(axis.text.y = element_text(size = 12)) +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, face = "bold"))
+
+```
+
+{{< pagebreak >}}
+
+## Sample Unified School District Foster Youth Overview
+
+The following graph shows total enrollment in Sample Unified School District over time. The y-axis represents the total number of students enrolled on census day in the LEA for each school year.
+
+```{r lea_total_enrollment}
+#| echo: false
+#| warning: false
+
+local_enrollment <-
+  enrollment |>
+  filter(
+    countyname == "Solano",
+    (rtype == "D" & districtname == params$lea) |
+      (rtype == "S" & cds == lea_cds)
+  ) |>
+  select(reportingyear, districtname, schoolname, totalenrollment) |>
+  distinct()
+
+local_district <- local_enrollment$districtname[1]
+
+local_enrollment |>
+  ggplot(aes(x = reportingyear, y = totalenrollment), color = all_blue) +
+  geom_area(color = all_blue, fill = all_blue, linewidth = 1.5) +
+  geom_point(color = all_blue, size = 3) +
+  geom_text_repel(
+    aes(label = scales::comma(totalenrollment)),
+    vjust = -1,
+    color = "black"
+  ) +
+  scale_x_continuous(breaks = enrollment$reportingyear) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = paste("Total Enrollment in\n", "Sample Unified School District"),
+    x = "Reporting Year",
+    y = "Number of Students",
+    caption = "Source: California Department of Education Census Day Enrollment Data"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 12)) +
+  theme(axis.text.y = element_text(size = 12)) +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, face = "bold"))
+
+```
+
+{{< pagebreak >}}
+
+### Trends in Foster Youth Enrollment in Sample Unified School District
+
+The graph below shows census day foster youth enrollment in Sample Unified School District over time. The y-axis represents the total number of foster youth students enrolled in the LEA for each school year, with text labels indicating the percentage of total enrollment that these students represent. These census day enrollment figures may be different when compared to the foster youth cumulatively enrolled throughout the school year.
+
+```{r lea_foster_youth_time}
+#| echo: false
+#| warning: false
+
+enrollment |>
+  filter(
+    countyname == "Solano",
+    (rtype == "D" & districtname == params$lea) |
+      (rtype == "S" & cds == lea_cds),
+    student_group_long == "Foster Youth"
+  ) |>
+  ggplot(aes(x = reportingyear, y = subgrouptotal)) +
+  geom_area(color = foster_yellow, fill = foster_yellow, linewidth = 1.5) +
+  geom_point(color = foster_yellow, size = 3) +
+  geom_text_repel(
+    aes(label = scales::percent(rate / 100, accuracy = 0.1)),
+    vjust = -1,
+    color = "black"
+  ) +
+  scale_x_continuous(breaks = enrollment$reportingyear) +
+  scale_y_continuous(labels = scales::label_comma()) +
+  labs(
+    title = paste("Foster Youth Enrollment in\n", "Sample Unified School District"),
+    x = "Reporting Year",
+    y = "Number of Students",
+    caption = "Source: California Department of Education Census Day Enrollment Data"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 12)) +
+  theme(axis.text.y = element_text(size = 12)) +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, face = "bold"))
+
+```
+
+{{< pagebreak >}}
+
+### Suspension Trends for Foster Youth in Sample Unified School District
+
+The following graph shows suspension rates for foster youth in Sample Unified School District over time compared to the suspension rates for all students. The text labels indicate the number of students suspended each year for each student group. The suspensions rate indicator "represents the percentage of students who were suspended for a combined total of at least one full day at any time during the school year." [Source: CDE](https://www.cde.ca.gov/ta/ac/cm/dashboardsusp.asp).
+
+Data is not shown for years where the number of foster youth students is less than 11, per CDE reporting guidelines.
+
+```{r lea_suspension}
+#| echo: false
+#| warning: false
+
+lea_foster_dashboard <-
+  dashboard |>
+  filter(
+    countyname == "Solano",
+    (rtype == "D" & districtname == params$lea) |
+      (rtype == "S" & schoolname == params$lea),
+    student_group_long %in% c("Foster Youth", "All students")
+  )
+
+lea_foster_dashboard |>
+  filter(indicator == "suspension") |>
+  ggplot(aes(
+    x = reportingyear,
+    y = currstatus / 100,
+    color = student_group_long
+  )) +
+  geom_line(linewidth = 1.5) +
+  geom_point(size = 3) +
+  geom_text_repel(
+    aes(label = scales::comma(currnumer)),
+    vjust = -1,
+    color = "black"
+  ) +
+  scale_x_continuous(breaks = dashboard$reportingyear) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  scale_color_manual(
+    values = all_foster_colors
+  ) +
+  labs(
+    title = paste("Foster Youth Suspensions in\n", "Sample Unified School District"),
+    x = "Reporting Year",
+    y = "Percent of Foster Youth",
+    color = "Student Group",
+    caption = "Label shows total number of students that are suspended each year.
+    Source: California Department of Education Dashboard Data"
+  ) +
+  guides(color = guide_legend(position = "top")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 12)) +
+  theme(axis.text.y = element_text(size = 12)) +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, face = "bold"))
+
+```
+
+{{< pagebreak >}}
+
+### Chronic Absenteeism for Foster Youth in Sample Unified School District
+
+The following graph shows chronic absenteeism rates for foster youth in Sample Unified School District over time compared to the rates for all students. The text labels indicate the number of students in grades K-8 that were chronically absent each year for each student group. The chronic absenteeism indicator "represents the percentage of students who were absent 10 percent or more of the instructional days they were enrolled to attend." [Source: CDE](https://www.cde.ca.gov/ta/ac/cm/dashboardchronic.asp).
+
+Data is not shown for years where the number of foster youth students in K-8 is less than 11, per CDE reporting guidelines.
+
+```{r lea_absenteeism}
+#| echo: false
+#| warning: false
+
+lea_foster_dashboard |>
+  filter(indicator == "absenteeism") |>
+  ggplot(aes(
+    x = reportingyear,
+    y = currstatus / 100,
+    color = student_group_long
+  )) +
+  geom_line(linewidth = 1.5) +
+  geom_point(size = 3) +
+  geom_text_repel(
+    aes(label = scales::comma(currnumer)),
+    vjust = -1,
+    color = "black"
+  ) +
+  scale_x_continuous(breaks = dashboard$reportingyear) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  scale_color_manual(
+    values = all_foster_colors
+  ) +
+  labs(
+    title = paste(
+      "Foster Youth Chronic Absenteeism in\n",
+      "Sample Unified School District"
+    ),
+    x = "Reporting Year",
+    y = "Percent of Foster Students",
+    color = "Student Group",
+    caption = "Label shows total number of students that are chronically absent each year.
+    Source: California Department of Education Dashboard Data"
+  ) +
+  guides(color = guide_legend(position = "top")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 12)) +
+  theme(axis.text.y = element_text(size = 12)) +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, face = "bold"))
+
+```
+
+Report created by Solano County Office of Education. Email Dr. Tacey Rodgers trodgers@solanocoe.net or Joseph Knapp jknapp@solanocoe.net with any questions.

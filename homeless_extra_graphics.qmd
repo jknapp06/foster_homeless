@@ -1,0 +1,275 @@
+---
+title: "Foster Students and Students Experiencing Homelessness"
+format: 
+  html:
+    theme: zephyr
+    toc: true
+    toc-depth: 3
+  pdf:
+    toc: true
+    toc-depth: 3
+---
+
+```{r setup, include=FALSE}
+#| echo = FALSE
+#| warning = FALSE
+#| message = FALSE 
+#| fig.width = 10
+#| fig.height = 6)
+
+library(tidyverse)
+library(DT)
+library(wesanderson)
+library(png)
+library(ggtext)
+library(ggdist)
+library(systemfonts)
+library(knitr)
+library(kableExtra)
+
+# Register font for weepeople
+register_font(
+  name = "weepeople",
+  plain = "www/weepeople.ttf"
+)
+
+wee_letters <- c("Q", "b", "V", "h")
+
+# Load data
+dashboard <- read_csv("data/ca_dashboard.csv")
+enrollment <- read_csv("data/enrollment.csv")
+homeless <- read_csv("data/homeless.csv") %>% 
+  filter(charter_school == "All" | aggregate_level == "S", # schools (charter == Yes | No)
+         dass == "All" | aggregate_level == "S") %>%       # or All schools at higher aggregate levels
+  mutate(percent_homeless = homeless_student_enrollment/cumulative_enrollment * 100,
+         across(ends_with("(percent)"), parse_number))
+
+dashboard <- 
+  dashboard %>% 
+  mutate(statuslevel = as_factor(statuslevel),
+         reportingyear = fct_relevel(as_factor(reportingyear), "2019"),
+         indicator = fct_relevel(as_factor(indicator), 
+                                 "ELA", "Math", "ELPI", 
+                                 "absenteeism", "graduation", 
+                                 "suspension", "college/career"),
+         studentgroup = as_factor(studentgroup),
+         student_group_long = fct_relevel(as_factor(student_group_long),
+                                          "All students",
+                                          "Black/African American",
+                                          "American Indian or Alaska Native",
+                                          "Asian",
+                                          "Filipino",
+                                          "Hispanic",
+                                          "Pacific Islander",
+                                          "White",
+                                          "Multiple Races/Two or more",
+                                          "Socioeconomically Disadvantaged",
+                                          "Homeless Youth",
+                                          "Students with Disabilities",
+                                          "Foster Youth",
+                                          "English Learner",
+                                          "English Learners Only",
+                                          "RFEPs Only",
+                                          "English Only",
+                                          "Smarter Balanced Assessment",
+                                          "CA Alternative Assessment"
+         ),
+         priority_eligible = as_factor(priority_eligible),
+         indicator_eligible = as_factor(indicator_eligible),
+         charter_flag = if_else(is.na(charter_flag), "N", charter_flag),
+         color = as_factor(color)
+  )
+
+homeless_to_orange <- read_csv("data/homeless_to_orange.csv")
+
+years <- 
+  dashboard %>% 
+  select(reportingyear) %>% 
+  distinct()
+
+counties <- 
+  homeless %>% 
+  select(county_name) %>% 
+  distinct()
+
+districts <- 
+  homeless %>%
+  select(county_name, district_name) %>% 
+  distinct()
+
+schools <- 
+  homeless %>% 
+  select(county_name, district_name, school_name) %>% 
+  distinct()
+
+categories_for_districts <- 
+  homeless %>%
+  filter(aggregate_level == "D") %>% 
+  select(reporting_group) %>% 
+  distinct()
+
+student_groups <-
+  dashboard %>% 
+  select(studentgroup, student_group_long) %>% 
+  distinct()
+
+latest_school_year = "2023-24"
+
+status_colors <- c(
+  "lightgrey", "tomato", "orange",
+  "yellow", "mediumseagreen", "dodgerblue", "darkslategrey"
+)
+
+# Parameters that would have been inputs in Shiny
+# Default values
+selected_county <- "Solano"
+district_options <- districts %>% filter(county_name == selected_county)
+county_office <- district_options %>% 
+  filter(str_detect(district_name, "Office")) %>% 
+  pull(district_name) %>% 
+  nth(1)
+
+selected_district <- county_office
+school_options <- schools %>% 
+  filter(county_name == selected_county,
+         district_name == selected_district) %>% 
+  distinct()
+selected_school <- school_options$school_name[1]
+selected_group <- "Race/Ethnicity"
+
+# Prepare data based on selections
+homeless_in_district <- homeless %>%
+  filter(county_name == selected_county,
+         district_name == selected_district)
+
+homeless_in_school <- homeless_in_district %>% 
+  filter(school_name == selected_school)
+
+selected_subgroups <- homeless_in_district %>% 
+  filter(reporting_group == selected_group,
+         academic_year == latest_school_year,
+         aggregate_level == "D")
+
+homeless_in_school_this_year <- homeless_in_district %>% 
+  filter(school_name == selected_school,
+         reporting_category == "TA",
+         academic_year == latest_school_year) %>% 
+  pull(homeless_student_enrollment) %>% 
+  nth(1)
+```
+
+```{r homeless_table}
+# Create a table showing homeless student counts by reporting group
+selected_subgroups %>%
+  select(reporting_long, homeless_student_enrollment) %>%
+  arrange(desc(homeless_student_enrollment)) %>%
+  filter(!is.na(homeless_student_enrollment), homeless_student_enrollment > 0) %>%
+  kable(col.names = c("Group", "Number of Homeless Students"),
+        caption = paste("Students Experiencing Homelessness by", selected_group)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+```
+
+```{r homeless_groups}
+
+selected_subgroups %>%
+  filter(!is.na(homeless_student_enrollment), homeless_student_enrollment > 0) %>%
+  ggplot() +
+  geom_col(mapping = aes(y = reorder(reporting_long, homeless_student_enrollment),
+                         x = homeless_student_enrollment,
+                         fill = reporting_long)) +
+  labs(title = paste("Students in", selected_district,
+                    "Experiencing Homelessness by", selected_group),
+       y = NULL,
+       x = "Number of Students",
+       fill = NULL) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    title = element_text(size = 16),
+    legend.position = "none"
+  )
+
+```
+```{r homeless_icons}
+
+cat("### Students Experiencing Homelessness in", selected_district, "-", selected_school, "\n")
+cat("**Total number of students who experienced housing insecurity in", selected_school, latest_school_year, ":**", homeless_in_school_this_year, "\n")
+```
+
+
+```{r homeless_trends}
+
+homeless_in_school %>% 
+  filter(reporting_category == "TA") %>% 
+  ggplot() +
+  geom_line(mapping = aes(x = as_factor(academic_year), 
+                          y = homeless_student_enrollment,
+                          group = school_name),
+            linewidth = 2,
+            color = "skyblue") +
+  expand_limits(y = 0) +
+  labs(title = paste("Students Experiencing Homelessness in\n", 
+                     selected_district,
+                     selected_school,
+                     "\nsince", homeless_in_school$academic_year[1]),
+       x = "Academic Year",
+       y = "Number of Students") +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    title = element_text(size = 16),
+    axis.text = element_text(size = 12)
+  )
+
+```
+
+```{r homeless_status}
+
+# Create a table for housing status with count and percent columns
+homeless_in_school %>% 
+  filter(reporting_category == "TA", academic_year == latest_school_year) %>%
+  # First, select and rename the columns to make them easier to work with
+  select(
+    doubled_up_count = temporarily_doubled_up,
+    doubled_up_percent = `temporarily_doubled_up_(percent)`,
+    shelters_count = temporary_shelters,
+    shelters_percent = `temporary_shelters_(percent)`,
+    hotels_count = `hotels/motels`,
+    hotels_percent = `hotels/motels_(percent)`,
+    unsheltered_count = temporarily_unsheltered,
+    unsheltered_percent = `temporarily_unsheltered_(percent)`,
+    unknown_count = `missing/unknown`,
+    unknown_percent = `missing/unknown_(percent)`
+  ) %>%
+  # Reshape the data to a longer format for easier processing
+  pivot_longer(
+    cols = everything(),
+    names_to = c("housing_status", ".value"),
+    names_pattern = "(.+)_(count|percent)"
+  ) %>%
+  # Improve the display names and format values
+  mutate(
+    housing_status = case_when(
+      housing_status == "doubled_up" ~ "Temporarily Doubled Up",
+      housing_status == "shelters" ~ "Temporary Shelters",
+      housing_status == "hotels" ~ "Hotels/Motels",
+      housing_status == "unsheltered" ~ "Temporarily Unsheltered",
+      housing_status == "unknown" ~ "Missing/Unknown",
+      TRUE ~ housing_status
+    ),
+    # Format the percent with % symbol
+    percent = paste0(round(percent, 1), "%"),
+    # Format the count as integer
+    count = format(count, big.mark = ",")
+  ) %>%
+  # Sort by count in descending order
+  arrange(desc(as.numeric(gsub(",", "", count)))) %>%
+  kable(
+    col.names = c("Housing Status", "Count", "Percent"),
+    caption = paste("Housing Status for Homeless Students in", selected_school),
+    align = c("l", "r", "r")
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+```
